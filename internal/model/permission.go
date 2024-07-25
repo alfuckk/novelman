@@ -1,4 +1,4 @@
-package authmodel
+package model
 
 import "gorm.io/gorm"
 

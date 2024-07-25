@@ -1,20 +1,18 @@
 package handler
 
 import (
-	"novelman/internal/handler"
-	"novelman/internal/service"
-
 	"github.com/gin-gonic/gin"
+	"novelman/internal/service"
 )
 
 type AdminHandler struct {
-	*handler.Handler
+	*Handler
 	adminService service.AdminService
 }
 
 func NewAdminHandler(
-	handler *handler.Handler,
-	adminService service.AdminService,
+    handler *Handler,
+    adminService service.AdminService,
 ) *AdminHandler {
 	return &AdminHandler{
 		Handler:      handler,
