@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
 	apiV1 "novelman/api/v1"
 	"novelman/docs"
 	"novelman/internal/handler"
@@ -9,6 +8,8 @@ import (
 	"novelman/pkg/jwt"
 	"novelman/pkg/log"
 	"novelman/pkg/server/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -19,6 +20,7 @@ func NewHTTPServer(
 	conf *viper.Viper,
 	jwt *jwt.JWT,
 	userHandler *handler.UserHandler,
+	adminHandler *handler.AdminHandler,
 ) *http.Server {
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
@@ -52,6 +54,11 @@ func NewHTTPServer(
 
 	v1 := s.Group("/v1")
 	{
+		noLoginRouter := v1.Group("/auth")
+		{
+			noLoginRouter.POST("/register", adminHandler.Register)
+			noLoginRouter.POST("/login", adminHandler.Login)
+		}
 		// No route group has permission
 		noAuthRouter := v1.Group("/")
 		{

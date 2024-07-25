@@ -13,6 +13,7 @@ import (
 	"novelman/pkg/log"
 	"novelman/pkg/server/http"
 	"novelman/pkg/sid"
+
 	"github.com/google/wire"
 	"github.com/spf13/viper"
 )
@@ -23,16 +24,19 @@ var repositorySet = wire.NewSet(
 	repository.NewRepository,
 	repository.NewTransaction,
 	repository.NewUserRepository,
+	repository.NewAdminRepository,
 )
 
 var serviceSet = wire.NewSet(
 	service.NewService,
 	service.NewUserService,
+	service.NewAdminService,
 )
 
 var handlerSet = wire.NewSet(
 	handler.NewHandler,
 	handler.NewUserHandler,
+	handler.NewAdminHandler,
 )
 
 var serverSet = wire.NewSet(
@@ -48,7 +52,7 @@ func newApp(
 ) *app.App {
 	return app.NewApp(
 		app.WithServer(httpServer, job),
-		app.WithName("demo-server"),
+		app.WithName("admin"),
 	)
 }
 

@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type Admin struct {
 	gorm.Model
+	AdminID   string         `gorm:"unique;not null"`
 	AdminName string         `gorm:"admin_name"`
 	Password  string         `gorm:"password"`
 	Email     string         `gorm:"email"`

@@ -7,6 +7,8 @@
 package wire
 
 import (
+	"github.com/google/wire"
+	"github.com/spf13/viper"
 	"novelman/internal/handler"
 	"novelman/internal/repository"
 	"novelman/internal/server"
@@ -16,8 +18,6 @@ import (
 	"novelman/pkg/log"
 	"novelman/pkg/server/http"
 	"novelman/pkg/sid"
-	"github.com/google/wire"
-	"github.com/spf13/viper"
 )
 
 // Injectors from wire.go:
@@ -33,7 +33,10 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 	userRepository := repository.NewUserRepository(repositoryRepository)
 	userService := service.NewUserService(serviceService, userRepository)
 	userHandler := handler.NewUserHandler(handlerHandler, userService)
-	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler)
+	adminRepository := repository.NewAdminRepository(repositoryRepository)
+	adminService := service.NewAdminService(serviceService, adminRepository)
+	adminHandler := handler.NewAdminHandler(handlerHandler, adminService)
+	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, adminHandler)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)
 	return appApp, func() {
@@ -42,11 +45,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 
 // wire.go:
 
-var repositorySet = wire.NewSet(repository.NewDB, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository)
+var repositorySet = wire.NewSet(repository.NewDB, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewAdminRepository)
 
-var serviceSet = wire.NewSet(service.NewService, service.NewUserService)
+var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewAdminService)
 
-var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler)
+var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewAdminHandler)
 
 var serverSet = wire.NewSet(server.NewHTTPServer, server.NewJob)
 
@@ -56,5 +59,5 @@ func newApp(
 	job *server.Job,
 
 ) *app.App {
-	return app.NewApp(app.WithServer(httpServer, job), app.WithName("demo-server"))
+	return app.NewApp(app.WithServer(httpServer, job), app.WithName("admin"))
 }
