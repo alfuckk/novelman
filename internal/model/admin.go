@@ -9,6 +9,7 @@ type Admin struct {
 	Password  string  `gorm:"password"`
 	Email     string  `gorm:"unique;not null"`
 	Roles     []*Role `gorm:"many2many:admin_roles;"` // 多对多关联到角色表
+	Status    int64
 }
 
 func (Admin) TableName() string {

@@ -105,7 +105,7 @@ func NewDB(conf *viper.Viper, l *log.Logger) *gorm.DB {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
-	db.AutoMigrate(&model.Admin{}, &model.Permission{}, &model.Role{}, &model.RolePermission{}, &model.AdminRole{})
+	db.AutoMigrate(&model.Admin{}, &model.Permission{}, &model.Role{}, &model.RolePermission{}, &model.AdminRole{}, &model.App{}, &model.User{}, &model.UserApp{})
 	if err := InitAdmin(l, db); err != nil {
 		l.Info("InitAdmin", zap.String("", ""))
 	}

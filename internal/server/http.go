@@ -21,6 +21,7 @@ func NewHTTPServer(
 	jwt *jwt.JWT,
 	userHandler *handler.UserHandler,
 	adminHandler *handler.AdminHandler,
+	appHandler *handler.AppHandler,
 ) *http.Server {
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
@@ -57,12 +58,33 @@ func NewHTTPServer(
 		// No route group has permission
 		noAuthRouter := v1.Group("/")
 		{
-			adminAuthRouter := noAuthRouter.Group("/auth")
+			adminAuthRouter := noAuthRouter.Group("/admin")
 			{
 				adminAuthRouter.POST("/login", adminHandler.Login)
 			}
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
+		}
+		adminRouter := v1.Group("/admin")
+		{
+			appRouter := adminRouter.Group("/app")
+			{
+				appRouter.POST("/create", appHandler.CreateApp)
+				appRouter.POST("/delete", appHandler.CreateApp)
+				appRouter.POST("/edit", appHandler.CreateApp)
+				appRouter.POST("/get", appHandler.CreateApp)
+				appRouter.POST("/list", appHandler.CreateApp)
+			}
+			userRouter := adminRouter.Group("/user")
+			{
+				userRouter.POST("/create", userHandler.GetProfile)
+				userRouter.POST("/delete", userHandler.GetProfile)
+				userRouter.POST("/ban", userHandler.GetProfile)
+				userRouter.POST("/edit", userHandler.GetProfile)
+				userRouter.POST("/get", userHandler.GetProfile)
+				userRouter.POST("/list", userHandler.GetProfile)
+			}
+			// adminRouter.POST("/")
 		}
 		// Non-strict permission routing group
 		noStrictAuthRouter := v1.Group("/").Use(middleware.NoStrictAuth(jwt, logger))

@@ -1,19 +1,16 @@
 package model
 
-import (
-	"gorm.io/gorm"
-	"time"
-)
+import "gorm.io/gorm"
 
 type User struct {
-	Id        uint   `gorm:"primarykey"`
-	UserId    string `gorm:"unique;not null"`
-	Nickname  string `gorm:"not null"`
-	Password  string `gorm:"not null"`
-	Email     string `gorm:"not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	gorm.Model
+	UserID   string `gorm:"unique;not null"`
+	Nickname string `gorm:"not null"`
+	Password string `gorm:"not null"`
+	Email    string `gorm:"unique;not null"`
+	Status   int64
+	Quota    int64
+	Apps     []*App `gorm:"many2many:user_apps;"` // 多对多关联到角色表
 }
 
 func (u *User) TableName() string {

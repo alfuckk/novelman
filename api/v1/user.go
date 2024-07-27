@@ -22,7 +22,8 @@ type UpdateProfileRequest struct {
 	Email    string `json:"email" binding:"required,email" example:"1234@gmail.com"`
 }
 type GetProfileResponseData struct {
-	UserId   string `json:"userId"`
+	UserID   string `json:"user_id"`
+	Email    string `json:"email"`
 	Nickname string `json:"nickname" example:"alan"`
 }
 type GetProfileResponse struct {
