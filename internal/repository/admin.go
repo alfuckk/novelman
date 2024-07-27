@@ -40,8 +40,9 @@ func (r *adminRepository) Create(ctx context.Context, admin *model.Admin) error 
 }
 
 func (r *adminRepository) GetByEmail(ctx context.Context, email string) (*model.Admin, error) {
+
 	var admin model.Admin
-	if err := r.DB(ctx).Where("email = ?", email).First(&admin).Error; err != nil {
+	if err := r.DB(ctx).Debug().Preload("Roles").Where("email = ?", email).First(&admin).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

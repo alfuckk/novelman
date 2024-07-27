@@ -5,12 +5,12 @@ import (
 	v1 "novelman/api/v1"
 	"novelman/internal/model"
 	"novelman/internal/repository"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type AdminService interface {
-	Register(ctx context.Context, req *v1.RegisterRequest) error
 	GetAdmin(ctx context.Context, id int64) (*model.Admin, error)
 	Login(ctx context.Context, req *v1.LoginRequest) (string, error)
 }
@@ -34,43 +34,20 @@ func (s *adminService) GetAdmin(ctx context.Context, id int64) (*model.Admin, er
 	return s.adminRepository.GetAdmin(ctx, id)
 }
 
-func (s *adminService) Register(ctx context.Context, req *v1.RegisterRequest) error {
-	// check adminname
-	admin, err := s.adminRepository.GetByEmail(ctx, req.Email)
-	if err != nil {
-		return v1.ErrInternalServerError
-	}
-	if err == nil && admin != nil {
-		return v1.ErrEmailAlreadyUse
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	// Generate admin ID
-	adminID, err := s.sid.GenString()
-	if err != nil {
-		return err
-	}
-	admin = &model.Admin{
-		AdminID:  adminID,
-		Email:    req.Email,
-		Password: string(hashedPassword),
-	}
-	// Transaction demo
-	err = s.tm.Transaction(ctx, func(ctx context.Context) error {
-		// Create a admin
-		if err = s.adminRepository.Create(ctx, admin); err != nil {
-			return err
-		}
-		// TODO: other repo
-		return nil
-	})
-	return err
-}
-
 func (s *adminService) Login(ctx context.Context, req *v1.LoginRequest) (string, error) {
+	admin, err := s.adminRepository.GetByEmail(ctx, req.Email)
+	if err != nil || admin == nil {
+		return "", v1.ErrUnauthorized
+	}
 
-	return "", nil
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.Password))
+	if err != nil {
+		return "", err
+	}
+	token, err := s.jwt.GenToken(admin.AdminID, time.Now().Add(time.Hour*24*90))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

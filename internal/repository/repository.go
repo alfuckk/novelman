@@ -3,33 +3,38 @@ package repository
 import (
 	"context"
 	"fmt"
-	"github.com/glebarez/sqlite"
+	"novelman/internal/model"
 	"novelman/pkg/log"
+	"novelman/pkg/sid"
 	"novelman/pkg/zapgorm2"
+	"time"
+
+	"github.com/glebarez/sqlite"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"time"
 )
 
 const ctxTxKey = "TxKey"
 
 type Repository struct {
-	db *gorm.DB
-	//rdb    *redis.Client
+	db     *gorm.DB
+	rdb    *redis.Client
 	logger *log.Logger
 }
 
 func NewRepository(
 	logger *log.Logger,
 	db *gorm.DB,
-	// rdb *redis.Client,
+	rdb *redis.Client,
 ) *Repository {
 	return &Repository{
-		db: db,
-		//rdb:    rdb,
+		db:     db,
+		rdb:    rdb,
 		logger: logger,
 	}
 }
@@ -100,8 +105,68 @@ func NewDB(conf *viper.Viper, l *log.Logger) *gorm.DB {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 	sqlDB.SetConnMaxLifetime(time.Hour)
+	db.AutoMigrate(&model.Admin{}, &model.Permission{}, &model.Role{}, &model.RolePermission{}, &model.AdminRole{})
+	if err := InitAdmin(l, db); err != nil {
+		l.Info("InitAdmin", zap.String("", ""))
+	}
+
 	return db
 }
+
+func InitAdmin(l *log.Logger, db *gorm.DB) error {
+	// Check if roles exist
+	var totalRoles, totalAdmins int64
+
+	if err := db.Model(&model.Role{}).Count(&totalRoles).Error; err != nil {
+		return err
+	}
+
+	if totalRoles == 0 {
+		// Create initial role
+		roles := []*model.Role{
+			{RoleName: "super admin"},
+		}
+		for _, role := range roles {
+			if err := db.Create(role).Error; err != nil {
+				return err
+			}
+		}
+
+		l.Info("Created initial role", zap.String("role", "super admin"))
+
+		// Check if admin user exists
+		if err := db.Model(&model.Admin{}).Where("email = ?", "admin@admin.com").Count(&totalAdmins).Error; err != nil {
+			return err
+		}
+
+		if totalAdmins == 0 {
+			password, err := sid.NewSid().GenString()
+			if err != nil {
+				return err
+			}
+
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+			if err != nil {
+				return err
+			}
+			// Create admin user
+			admin := model.Admin{
+				Email:    "admin@admin.com",
+				Password: string(hashedPassword),
+				Roles:    roles,
+			}
+			if err := db.Preload("Role").Create(&admin).Error; err != nil {
+				return err
+			}
+
+			l.Debug("Created admin user", zap.String("email", admin.Email), zap.String("password", password))
+		}
+	}
+
+	return nil
+}
+
 func NewRedis(conf *viper.Viper) *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     conf.GetString("data.redis.addr"),

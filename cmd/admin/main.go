@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"novelman/cmd/server/wire"
+	"novelman/cmd/admin/wire"
 	"novelman/pkg/config"
 	"novelman/pkg/log"
 

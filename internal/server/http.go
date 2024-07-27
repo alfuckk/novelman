@@ -54,14 +54,13 @@ func NewHTTPServer(
 
 	v1 := s.Group("/v1")
 	{
-		noLoginRouter := v1.Group("/auth")
-		{
-			noLoginRouter.POST("/register", adminHandler.Register)
-			noLoginRouter.POST("/login", adminHandler.Login)
-		}
 		// No route group has permission
 		noAuthRouter := v1.Group("/")
 		{
+			adminAuthRouter := noAuthRouter.Group("/auth")
+			{
+				adminAuthRouter.POST("/login", adminHandler.Login)
+			}
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
 		}
